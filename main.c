@@ -13,13 +13,16 @@ typedef struct box {
 
 typedef struct player {
     Box **grille;
-    char *name;
     bool lastShotSuccess;
     int porteAvion;
     int croiseur;
     int destroyer;
     int sousMarin;
     int torpilleur;
+    int tirLigne;
+    int tirCroix;
+    int tirPlus;
+    int tirCarre;
 } Player;
 
 typedef Player *PlayerPtr;
@@ -35,7 +38,7 @@ void initGrille(int size, Box grille[size][size]) {
 }
 
 int addShip(int size, Box grille[size][size], Ship bateau) {
-    int x,y,lenght,tmp, attemps=10;
+    int x,y,lenght,tmp, attemps=50;
     size--;
     switch(bateau) {
         case PorteAvion:lenght=5;break;
@@ -118,16 +121,19 @@ int addShip(int size, Box grille[size][size], Ship bateau) {
     return 1;
 }
 
-int initPlayer(int size, PlayerPtr joueur, char* nom) {
+int initPlayer(int size, PlayerPtr joueur) {
     joueur->grille=malloc(size*size*sizeof(Box));
     initGrille(size, joueur->grille);
-    joueur->name=nom;
     joueur->lastShotSuccess=false;
     joueur->porteAvion=5;
     joueur->croiseur=4;
     joueur->destroyer=3;
     joueur->sousMarin=3;
     joueur->torpilleur=2;
+    joueur->tirLigne=1;
+    joueur->tirCroix=1;
+    joueur->tirPlus=1;
+    joueur->tirCarre=1;
     if(addShip(size, joueur->grille, PorteAvion)) {
         return 1;
     }
@@ -271,7 +277,6 @@ PlayerPtr shoot(int size, PlayerPtr tireur, PlayerPtr cible, int x, int y, Box g
             }
             else {
                 printf("Coule !\n");
-                printf("%d ", !((cible->porteAvion)+(cible->croiseur)+(cible->destroyer)+(cible->sousMarin)+(cible->torpilleur)));
                 if(!((cible->porteAvion)+(cible->croiseur)+(cible->destroyer)+(cible->sousMarin)+(cible->torpilleur))) {
                     grille[x][y].shoted=true;
                     return tireur;
@@ -316,12 +321,12 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA) {
                     ptry++;
                 }
                 else {
-            printf("Cible incorrecte !\n");
+                    printf("Cible incorrecte !\n");
                     return play(size,joueur,IA);
                 }
             }
             else {
-            printf("Cible incorrecte !\n");
+                printf("Cible incorrecte !\n");
                 return play(size,joueur,IA);
             }
         }
@@ -347,15 +352,14 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA) {
                 }
             }
         }
-        printf("Cible : %d\n", tmp);
         return shoot(size, joueur, IA, atoi(x), tmp, IA->grille);
     }
 }
 
 int main() {
     srand (time (NULL));
-    int size=0;
-    PlayerPtr winner=NULL;
+    int i, init, size=0, replay=0, attemps=10;
+    PlayerPtr winner;
     while(size<5 || size>702) {
         printf("Entrer la taille de la grille (entre 5 et 702) : ");
         scanf("%d", &size);
@@ -363,19 +367,42 @@ int main() {
     size++;
     PlayerPtr joueur=malloc(sizeof(Player));
     PlayerPtr IA=malloc(sizeof(Player));
-    if(initPlayer(size, joueur, "Joueur")) {
-        printf("La grille est trop petite pour placer tous les navires de %s.", joueur->name);
-    }
-    else if(initPlayer(size, IA, "Ordinateur")) {
-        printf("La grille est trop petite pour placer tous les navires de %s.", IA->name);
-    }
-    else {
-        printGrilles(size, joueur->grille, IA->grille);
-        while(!winner) {
-            winner=play(size, joueur, IA);
-            printGrilles(size, joueur->grille, IA->grille);
+    do {
+        init=0;
+        winner=NULL;
+        for(i=0; i<attemps && !init; i++) {
+            if(initPlayer(size, joueur)) {
+                printf("La grille est trop petite pour placer tous vos navires.\n");
+            }
+            else {
+                init++;
+            }
         }
-        printf("\n%s a gagne la partie, tous les navires adverses sont coules !\n", winner->name);
-    }
+        while(init==1) {
+            if(initPlayer(size, IA)) {
+                printf("La grille est trop petite pour placer tous les navires adverses.\n");
+            }
+            else {
+                init++;
+            }
+        }
+        if(init==2) {
+            printGrilles(size, joueur->grille, IA->grille);
+            while(!winner) {
+                winner=play(size, joueur, IA);
+                printGrilles(size, joueur->grille, IA->grille);
+            }
+            printf("\n\t\t------------------------------------------------------------------------\n\t\t|  ");
+            if(winner==joueur){
+                printf("Vous avez gagne la partie, tous les navires adverses sont coules !");
+            }
+            else {
+                printf("Vous avez perdu la partie, l'adversaire a coule tous vos navires !");
+            }
+            printf("  |\n\t\t------------------------------------------------------------------------\n");
+            printf("\nVoulez vous rejouer ?\t 0: Non\t\t1:Oui\n");
+            scanf("%d", &replay);
+        }
+    } while(replay);
     return 0;
 }
