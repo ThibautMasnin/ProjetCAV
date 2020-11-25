@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1606270509 source:d:\doc\info\langage c\licence\projetcav\main.c
+	<stdio.h>
+	<stdlib.h>
+	<stdbool.h>
+	<string.h>
+
