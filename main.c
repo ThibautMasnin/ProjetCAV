@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 typedef enum ship
 {
@@ -44,7 +45,7 @@ typedef struct player
 
 typedef Player *PlayerPtr;
 
-void initGrille(int size, Box grille[size][size])
+void initGrille(int size, Box **grille)
 {
     int i, j;
     for (i = 0; i < size; i++)
@@ -57,7 +58,7 @@ void initGrille(int size, Box grille[size][size])
     }
 }
 
-int addShip(int size, Box grille[size][size], Ship bateau)
+int addShip(int size, Box **grille, Ship bateau)
 {
     int x, y, length, tmp, attemps = 50;
     size--;
@@ -177,7 +178,12 @@ int addShip(int size, Box grille[size][size], Ship bateau)
 
 int initPlayer(int size, PlayerPtr joueur)
 {
-    joueur->grille = malloc(size * size * sizeof(Box));
+    joueur->grille = malloc(size * sizeof(Box *));
+    for (int i = 0; i < size; i++)
+    {
+        joueur->grille[i] = malloc(size * sizeof(Box));
+    }
+
     initGrille(size, joueur->grille);
     joueur->lastShotSuccess = false;
     joueur->porteAvion = 5;
@@ -212,7 +218,7 @@ int initPlayer(int size, PlayerPtr joueur)
     return 0;
 }
 
-void printGrilles(int size, Box grilleJoueur[size][size], Box grilleIA[size][size])
+void printGrilles(int size, Box **grilleJoueur, Box **grilleIA)
 {
     int i, j;
     printf("\nJoueur :  ");
@@ -348,7 +354,7 @@ void printGrilles(int size, Box grilleJoueur[size][size], Box grilleIA[size][siz
     printf("\n");
 }
 
-PlayerPtr shoot(int size, PlayerPtr tireur, PlayerPtr cible, int x, int y, Box grille[size][size])
+PlayerPtr shoot(int size, PlayerPtr tireur, PlayerPtr cible, int x, int y, Box **grille)
 {
     int *ptr;
     if (x > size - 1 || y > size - 1)
@@ -377,6 +383,10 @@ PlayerPtr shoot(int size, PlayerPtr tireur, PlayerPtr cible, int x, int y, Box g
             case Torpilleur:
                 ptr = &(cible->torpilleur);
                 break;
+            // need to handle null and close, temporary fix
+            default:
+                // do sth here
+                ;
             }
             printf("%d ", *ptr);
             (*ptr)--;
