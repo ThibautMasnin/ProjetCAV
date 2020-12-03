@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include <regex.h>
 
 typedef enum ship
 {
@@ -419,9 +420,27 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
 {
     int tmp = 0;
     char cible[6], x[] = "   ", y[] = "  ", *ptrx = x, *ptry = y;
+    //-----------------regex----------------------------------------
+    regex_t regex;
+    regex_t regex2;
+    int value, value2;
+    // create regex
+    value = regcomp(&regex, "[1-9][0-9]{0,2}[a-zA-Z]{1,2}", REG_EXTENDED);
+    value2 = regcomp(&regex2, "[a-zA-Z]{1,2}[1-9][0-9]{0,2}", REG_EXTENDED);
+
+    if (value == 0 && value2 == 0)
+    {
+        // printf("RegEx compiled successfully.\n");
+    }
+    else
+    {
+        printf("Compilation error.");
+    }
+    //------------------------------------------------------
+
     printf("\nEntrer les coordonnees de la cible (ex: '3A') : ");
     scanf("%s", cible);
-    // strcpy(cible, "2A");
+    // strcpy(cible, "3cc");
     if (!strcmp(cible, "stop"))
     {
         return IA;
@@ -432,38 +451,45 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
     }
     else
     {
-        for (int i = 0; cible[i] != '\0'; i++)
+        value = regexec(&regex, cible, 0, NULL, 0);
+        value2 = regexec(&regex2, cible, 0, NULL, 0);
+        // if it matches the pattern
+        if (value == 0 || value2 == 0)
         {
-            if (cible[i] >= '0' && cible[i] <= '9')
+
+            for (int i = 0; cible[i] != '\0'; i++)
             {
-                if (*ptrx == ' ')
+                if (cible[i] >= '0' && cible[i] <= '9')
                 {
-                    *ptrx = cible[i];
-                    ptrx++;
+                    if (*ptrx == ' ')
+                    {
+                        *ptrx = cible[i];
+                        ptrx++;
+                    }
+                    else
+                    {
+                        printf("Cible incorrecte !\n");
+                        return play(size, joueur, IA);
+                    }
+                }
+                else if ((cible[i] >= 'A' && cible[i] <= 'Z') || (cible[i] >= 'a' && cible[i] <= 'z'))
+                {
+                    if (*ptry == ' ')
+                    {
+                        *ptry = cible[i];
+                        ptry++;
+                    }
+                    else
+                    {
+                        printf("Cible incorrecte !\n");
+                        return play(size, joueur, IA);
+                    }
                 }
                 else
                 {
                     printf("Cible incorrecte !\n");
                     return play(size, joueur, IA);
                 }
-            }
-            else if ((cible[i] >= 'A' && cible[i] <= 'Z') || (cible[i] >= 'a' && cible[i] <= 'z'))
-            {
-                if (*ptry == ' ')
-                {
-                    *ptry = cible[i];
-                    ptry++;
-                }
-                else
-                {
-                    printf("Cible incorrecte !\n");
-                    return play(size, joueur, IA);
-                }
-            }
-            else
-            {
-                printf("Cible incorrecte !\n");
-                return play(size, joueur, IA);
             }
         }
         if (ptry == y || ptrx == x)

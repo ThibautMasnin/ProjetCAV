@@ -2,3 +2,11 @@ a.out
 .vscode
 .vscode/settings.json
 main.dSYM
+obj
+bin
+obj
+a.out.dSYM
+ProjetCAV.cbp
+ProjetCAV.depend
+ProjetCAV.layout
+main
