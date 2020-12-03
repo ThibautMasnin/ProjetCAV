@@ -6,13 +6,13 @@
 
 typedef enum ship
 {
-    Null,
-    Close,
-    PorteAvion,
-    Croiseur,
-    Destroyer,
-    SousMarin,
-    Torpilleur
+    Null,       // 0
+    Close,      // 1
+    PorteAvion, //2
+    Croiseur,   //3
+    Destroyer,  //4
+    SousMarin,  //5
+    Torpilleur  //6
 } Ship;
 
 typedef struct box
@@ -60,7 +60,7 @@ void initGrille(int size, Box **grille)
 
 int addShip(int size, Box **grille, Ship bateau)
 {
-    int x, y, length, tmp, attemps = 50;
+    int x, y, length, tmp, attempts = 50;
     size--;
     switch (bateau)
     {
@@ -87,7 +87,7 @@ int addShip(int size, Box **grille, Ship bateau)
     {
         return 1;
     }
-    while (attemps--)
+    while (attempts--)
     {
         tmp = 1;
         if (rand() % 2)
@@ -96,7 +96,7 @@ int addShip(int size, Box **grille, Ship bateau)
             y = rand() % (size) + 1;
             if (!(grille[x][y].bateau))
             {
-                while (!(grille[x + tmp][y].bateau) && x + tmp <= size && tmp < length)
+                while (x + tmp <= size && tmp < length && !(grille[x + tmp][y].bateau))
                 {
                     tmp++;
                 }
@@ -421,6 +421,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
     char cible[6], x[] = "   ", y[] = "  ", *ptrx = x, *ptry = y;
     printf("\nEntrer les coordonnees de la cible (ex: '3A') : ");
     scanf("%s", cible);
+    // strcpy(cible, "2A");
     if (!strcmp(cible, "stop"))
     {
         return IA;
@@ -502,7 +503,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
 int main()
 {
     srand(time(NULL));
-    int i, init, size = 0, replay = 0, attemps = 10;
+    int i, init, size, replay = 0, attempts = 10;
     PlayerPtr winner;
     while (size < 5 || size > 702)
     {
@@ -516,7 +517,7 @@ int main()
     {
         init = 0;
         winner = NULL;
-        for (i = 0; i < attemps && !init; i++)
+        for (i = 0; i < attempts && !init; i++)
         {
             if (initPlayer(size, joueur))
             {
