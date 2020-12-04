@@ -476,7 +476,7 @@ void reset_reponse(PlayerPtr p)
 // return a matrix that the attack_range has covered
 Box **range_ligne(int x, int y, int size)
 {
-    Box **range = malloc(sizeof(Box *));
+    Box **range = malloc(size * sizeof(Box *));
     for (int i = 0; i < size; i++)
     {
         range[i] = malloc(size * sizeof(Box));
@@ -502,7 +502,7 @@ Box **range_ligne(int x, int y, int size)
 
 Box **range_croix(int x, int y, int size)
 {
-    Box **range = malloc(sizeof(Box *));
+    Box **range = malloc(size * sizeof(Box *));
     for (int i = 0; i < size; i++)
     {
         range[i] = malloc(size * sizeof(Box));
@@ -536,7 +536,7 @@ Box **range_croix(int x, int y, int size)
 
 Box **range_plus(int x, int y, int size)
 {
-    Box **range = malloc(sizeof(Box *));
+    Box **range = malloc(size * sizeof(Box *));
     for (int i = 0; i < size; i++)
     {
         range[i] = malloc(size * sizeof(Box));
@@ -570,16 +570,16 @@ Box **range_plus(int x, int y, int size)
 
 Box **range_carre(int x, int y, int size)
 {
-    Box **range = malloc(sizeof(Box *));
+    Box **range = malloc(size * sizeof(Box *));
     for (int i = 0; i < size; i++)
     {
         range[i] = malloc(size * sizeof(Box));
     }
     initGrille(size, range);
 
-    for (int i = x - 1; i < x + 1; i++)
+    for (int i = x - 1; i <= x + 1; i++)
     {
-        for (int j = y - 1; i < y + 1; i++)
+        for (int j = y - 1; j <= y + 1; j++)
         {
             if (i < size && i > 0 && j < size && j > 0)
             {
@@ -720,7 +720,8 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         {
 
             printf("Tir en ligne : Entrer une lettre pour une colonne, un chiffre pour un rang ");
-            scanf("%s", conversation);
+            // escape the newline from the previous scanf
+            scanf(" %s", conversation);
             if (validate_reponse(conversation, tireur))
             {
 
@@ -789,7 +790,7 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         {
 
             printf("Tir en Croix : les coordonnees du centre de ce tir special(ex: '3A'): ");
-            scanf("%s", conversation);
+            scanf(" %s", conversation);
             if (validate_reponse(conversation, tireur))
             {
                 // contains one number and at least one letter
@@ -840,7 +841,7 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         {
 
             printf("Tir en Plus : les coordonnees de du centre de ce tir special(ex: '3A'): ");
-            scanf("%s", conversation);
+            scanf(" %s", conversation);
             if (validate_reponse(conversation, tireur))
             {
                 // contains one number and at least one letter
@@ -891,7 +892,7 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         {
 
             printf("Tir en Carre : les coordonnees de du centre de ce tir special(ex: '3A'): ");
-            scanf("%s", conversation);
+            scanf(" %s", conversation);
             if (validate_reponse(conversation, tireur))
             {
                 // contains one number and at least one letter
@@ -899,7 +900,7 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
                 {
                     // function pointers
 
-                    att_ptr = &range_plus;
+                    att_ptr = &range_carre;
                     // mark matrice
                     x = tireur->rep->num;
                     y = convert_letters(tireur->rep->alphbet);
