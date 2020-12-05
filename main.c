@@ -774,35 +774,51 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
                     if (tireur->rep->num != 0)
                     {
                         x = tireur->rep->num;
-                        // entire row
-                        // call function pointer to get the matrix of attack range
-                        Box **ult = att_ptr(x, 0, size);
-                        // pass the attack matrix to compare with the original
-                        result = matrix_transform(grille, ult, size, tireur, cible);
-
-                        free_range_matrix(ult, size);
-                        att_ptr = NULL;
-
-                        // tirLigne used
-                        tireur->tirLigne = 0;
-                        if (result)
+                        if (x > 0 && x < size)
                         {
-                            return tireur; // return the winner
+                            // entire row
+                            // call function pointer to get the matrix of attack range
+                            Box **ult = att_ptr(x, 0, size);
+                            // pass the attack matrix to compare with the original
+                            result = matrix_transform(grille, ult, size, tireur, cible);
+
+                            free_range_matrix(ult, size);
+                            att_ptr = NULL;
+
+                            // tirLigne used
+                            tireur->tirLigne = 0;
+                            if (result)
+                            {
+                                return tireur; // return the winner
+                            }
+                        }
+                        else
+                        {
+                            printf("entrée invalide\n");
+                            return special_shot(size, tireur, cible, grille);
                         }
                     }
                     else if (strlen(tireur->rep->alphbet) > 0)
                     {
                         y = convert_letters(tireur->rep->alphbet);
-                        Box **ult = att_ptr(0, y, size);
-                        // entire column
-                        result = matrix_transform(grille, ult, size, tireur, cible);
-
-                        free_range_matrix(ult, size);
-                        att_ptr = NULL;
-                        tireur->tirLigne = 0;
-                        if (result)
+                        if (y > 0 && y < size)
                         {
-                            return tireur; // return the winner
+                            Box **ult = att_ptr(0, y, size);
+                            // entire column
+                            result = matrix_transform(grille, ult, size, tireur, cible);
+
+                            free_range_matrix(ult, size);
+                            att_ptr = NULL;
+                            tireur->tirLigne = 0;
+                            if (result)
+                            {
+                                return tireur; // return the winner
+                            }
+                        }
+                        else
+                        {
+                            printf("entrée invalide\n");
+                            return special_shot(size, tireur, cible, grille);
                         }
                     }
                 }
@@ -834,22 +850,32 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
 
                     att_ptr = &range_croix;
                     // mark matrice
+
                     x = tireur->rep->num;
                     y = convert_letters(tireur->rep->alphbet);
-                    // entire row
-                    // call function pointer to get the matrix of attack range
-                    Box **ult = att_ptr(x, y, size);
-                    // pass the attack matrix to compare with the original
-                    result = matrix_transform(grille, ult, size, tireur, cible);
-                    free_range_matrix(ult, size);
-                    // set function pointer back to null
-                    att_ptr = NULL;
-
-                    // tirCroix set to 'used'
-                    tireur->tirCroix = 0;
-                    if (result)
+                    // make sure x,y is in the grille
+                    if (x > 0 && x < size && y > 0 && y < size)
                     {
-                        return tireur; // return the winner
+                        // entire row
+                        // call function pointer to get the matrix of attack range
+                        Box **ult = att_ptr(x, y, size);
+                        // pass the attack matrix to compare with the original
+                        result = matrix_transform(grille, ult, size, tireur, cible);
+                        free_range_matrix(ult, size);
+                        // set function pointer back to null
+                        att_ptr = NULL;
+
+                        // tirCroix set to 'used'
+                        tireur->tirCroix = 0;
+                        if (result)
+                        {
+                            return tireur; // return the winner
+                        }
+                    }
+                    else
+                    {
+                        printf("entrée invalide\n");
+                        return special_shot(size, tireur, cible, grille);
                     }
                 }
                 else
@@ -885,22 +911,32 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
 
                     att_ptr = &range_plus;
                     // mark matrice
+                    // make sure x,y is in the grille
+
                     x = tireur->rep->num;
                     y = convert_letters(tireur->rep->alphbet);
-                    // entire row
-                    // call function pointer to get the matrix of attack range
-                    Box **ult = att_ptr(x, y, size);
-                    // pass the attack matrix to compare with the original
-                    result = matrix_transform(grille, ult, size, tireur, cible);
-                    free_range_matrix(ult, size);
-                    // set function pointer back to null
-                    att_ptr = NULL;
-
-                    // tirCroix set to 'used'
-                    tireur->tirPlus = 0;
-                    if (result)
+                    if (x > 0 && x < size && y > 0 && y < size)
                     {
-                        return tireur; // return the winner
+                        // entire row
+                        // call function pointer to get the matrix of attack range
+                        Box **ult = att_ptr(x, y, size);
+                        // pass the attack matrix to compare with the original
+                        result = matrix_transform(grille, ult, size, tireur, cible);
+                        free_range_matrix(ult, size);
+                        // set function pointer back to null
+                        att_ptr = NULL;
+
+                        // tirCroix set to 'used'
+                        tireur->tirPlus = 0;
+                        if (result)
+                        {
+                            return tireur; // return the winner
+                        }
+                    }
+                    else
+                    {
+                        printf("entrée invalide\n");
+                        return special_shot(size, tireur, cible, grille);
                     }
                 }
                 else
@@ -936,22 +972,31 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
 
                     att_ptr = &range_carre;
                     // mark matrice
+
                     x = tireur->rep->num;
                     y = convert_letters(tireur->rep->alphbet);
-                    // entire row
-                    // call function pointer to get the matrix of attack range
-                    Box **ult = att_ptr(x, y, size);
-                    // pass the attack matrix to compare with the original
-                    result = matrix_transform(grille, ult, size, tireur, cible);
-                    free_range_matrix(ult, size);
-                    // set function pointer back to null
-                    att_ptr = NULL;
-
-                    // tirCroix set to 'used'
-                    tireur->tirCarre = 0;
-                    if (result)
+                    if (x > 0 && x < size && y > 0 && y < size)
                     {
-                        return tireur; // return the winner
+                        // entire row
+                        // call function pointer to get the matrix of attack range
+                        Box **ult = att_ptr(x, y, size);
+                        // pass the attack matrix to compare with the original
+                        result = matrix_transform(grille, ult, size, tireur, cible);
+                        free_range_matrix(ult, size);
+                        // set function pointer back to null
+                        att_ptr = NULL;
+
+                        // tirCroix set to 'used'
+                        tireur->tirCarre = 0;
+                        if (result)
+                        {
+                            return tireur; // return the winner
+                        }
+                    }
+                    else
+                    {
+                        printf("entrée invalide\n");
+                        return special_shot(size, tireur, cible, grille);
                     }
                 }
                 else
@@ -1081,27 +1126,38 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
             // mark matrice
             x = joueur->rep->num;
             y = convert_letters(joueur->rep->alphbet);
+            Box **shoot;
             // entire row
-            // call function pointer to get the matrix of attack range
-            Box **shoot = att_ptr(x, y, size);
+
             // first matrix is the cible, the second matrix is the range matrix
             // result = matrix_transform(IA->grille, shoot, size, joueur, IA);
 
-            result = standard_shoot_result(size, joueur, IA, x, y, IA->grille);
-
-            free_range_matrix(shoot, size);
-            // set function pointer back to null
-            att_ptr = NULL;
-
-            // result=NULL, game continue, no winner yet
-            if (result == NULL)
+            // makesure the attack range is in the grille
+            if (x > 0 && x < size && y > 0 && y < size)
             {
-                printGrilles(size, joueur->grille, IA->grille);
-                return play(size, joueur, IA);
+                // call function pointer to get the matrix of attack range
+                shoot = att_ptr(x, y, size);
+                result = standard_shoot_result(size, joueur, IA, x, y, IA->grille);
+
+                free_range_matrix(shoot, size);
+                // set function pointer back to null
+                att_ptr = NULL;
+
+                // result=NULL, game continue, no winner yet
+                if (result == NULL)
+                {
+                    printGrilles(size, joueur->grille, IA->grille);
+                    return play(size, joueur, IA);
+                }
+                else
+                {
+                    return result; // return the winner
+                }
             }
             else
             {
-                return result; // return the winner
+                printf("entrée invalide\n");
+                return play(size, joueur, IA);
             }
         }
         else
@@ -1177,9 +1233,12 @@ int initialization(PlayerPtr joueur, PlayerPtr IA)
     int size = 0;
     while (size < 5 || size > 702)
     {
-
         printf("Entrer la taille de la grille (entre 5 et 702) : ");
-        scanf("%d", &size);
+        if (scanf("%d", &size) == 0)
+        {
+            fflush(stdin);
+            printf("entrée invalide\n");
+        }
     }
     size++;
     return size;
