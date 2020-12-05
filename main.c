@@ -591,6 +591,21 @@ Box **range_carre(int x, int y, int size)
     return range;
 }
 
+Box **range_standard(int x, int y, int size)
+{
+    Box **range = malloc(size * sizeof(Box *));
+    for (int i = 0; i < size; i++)
+    {
+        range[i] = malloc(size * sizeof(Box));
+    }
+    initGrille(size, range);
+
+    // seulement une case
+    range[x][y].shot = true;
+
+    return range;
+}
+
 int status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr cible);
 int matrix_transform(Box **grille, Box **ult, int size, PlayerPtr tireur, PlayerPtr cible)
 {
@@ -684,33 +699,51 @@ int status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr cible)
 
 PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille)
 {
-    int choix;
+    int choix = -1;
     char conversation[6];
     int x, y;
     int result;
+    int check = 0; // check if there are special shots left
     // function pointers
     Box **(*att_ptr)(int, int, int);
+
     // display the special shots that the player has
-    printf("\nEntrer 0 pour ne pas utilier ultimate | ");
     if (tireur->tirLigne && tireur->sousMarin != 0)
     {
-        printf("Entrer 1 pour tireLigne |");
+        printf("Entrer 1 pour tireLigne | ");
+        check++;
     }
     if (tireur->tirCroix && tireur->croiseur != 0)
     {
         printf("Entrer 2 pour tireCroix | ");
+        check++;
     }
     if (tireur->tirPlus && tireur->croiseur != 0)
     {
         printf("Entrer 3 pour tirePlus | ");
+        check++;
     }
     if (tireur->tirCarre && tireur->porteAvion != 0)
     {
-        printf("Entrer 4 pour tireCarre ");
+        printf("Entrer 4 pour tireCarre | ");
+        check++;
     }
+    if (check == 0)
+    {
+        return NULL; // no shots left
+    }
+    printf("\nEntrer 0 pour ne pas utilier ultimate\n");
     //----------------------
-    printf("\n");
-    scanf("%d", &choix);
+
+    if (scanf("%d", &choix) == 0)
+    {
+        fflush(stdin);
+        printf("entrée invalide\n");
+        return special_shot(size, tireur, cible, grille);
+    }
+    // reset before taking new coordinates
+    reset_reponse(tireur);
+
     switch (choix)
     {
     case 0:
@@ -719,17 +752,18 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         if (tireur->tirLigne && tireur->sousMarin != 0)
         {
 
-            printf("Tir en ligne : Entrer une lettre pour une colonne, un chiffre pour un rang ");
+            printf("Tir en ligne : Entrer une lettre pour une colonne, un chiffre pour un rang\n");
             // escape the newline from the previous scanf
             scanf(" %s", conversation);
             if (validate_reponse(conversation, tireur))
             {
+                printf("%d,%s", tireur->rep->num, tireur->rep->alphbet);
 
-                // it means input contains numbers and letters at the same time
+                // if it contains numbers and letters at the same time
                 // return errors
                 if (tireur->rep->num != 0 && strlen(tireur->rep->alphbet) > 0)
                 {
-                    printf("entrée invalide");
+                    printf("entrée invalide\n");
                     return special_shot(size, tireur, cible, grille);
                 }
                 else
@@ -775,7 +809,7 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
             }
             else
             {
-                printf("entrée invalide");
+                printf("entrée invalide\n");
                 return special_shot(size, tireur, cible, grille);
             }
         }
@@ -789,8 +823,8 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         if (tireur->tirCroix && tireur->croiseur != 0)
         {
 
-            printf("Tir en Croix : les coordonnees du centre de ce tir special(ex: '3A'): ");
-            scanf(" %s", conversation);
+            printf("Tir en Croix : les coordonnees du centre de ce tir special(ex: '3A'):\n");
+            scanf("%s", conversation);
             if (validate_reponse(conversation, tireur))
             {
                 // contains one number and at least one letter
@@ -820,13 +854,13 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
                 }
                 else
                 {
-                    printf("entrée invalide");
+                    printf("entrée invalide\n");
                     return special_shot(size, tireur, cible, grille);
                 }
             }
             else
             {
-                printf("entrée invalide");
+                printf("entrée invalide\n");
                 return special_shot(size, tireur, cible, grille);
             }
         }
@@ -840,7 +874,7 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         if (tireur->tirPlus && tireur->croiseur != 0)
         {
 
-            printf("Tir en Plus : les coordonnees de du centre de ce tir special(ex: '3A'): ");
+            printf("Tir en Plus : les coordonnees de du centre de ce tir special(ex: '3A'):\n");
             scanf(" %s", conversation);
             if (validate_reponse(conversation, tireur))
             {
@@ -871,13 +905,13 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
                 }
                 else
                 {
-                    printf("entrée invalide");
+                    printf("entrée invalide\n");
                     return special_shot(size, tireur, cible, grille);
                 }
             }
             else
             {
-                printf("entrée invalide");
+                printf("entrée invalide\n");
                 return special_shot(size, tireur, cible, grille);
             }
         }
@@ -891,7 +925,7 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         if (tireur->tirCarre && tireur->porteAvion != 0)
         {
 
-            printf("Tir en Carre : les coordonnees de du centre de ce tir special(ex: '3A'): ");
+            printf("Tir en Carre : les coordonnees de du centre de ce tir special(ex: '3A'):\n");
             scanf(" %s", conversation);
             if (validate_reponse(conversation, tireur))
             {
@@ -922,13 +956,13 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
                 }
                 else
                 {
-                    printf("entrée invalide");
+                    printf("entrée invalide\n");
                     return special_shot(size, tireur, cible, grille);
                 }
             }
             else
             {
-                printf("entrée invalide");
+                printf("entrée invalide\n");
                 return special_shot(size, tireur, cible, grille);
             }
         }
@@ -939,195 +973,148 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
         }
         break;
     default:
-        printf("entrée invalide");
+        printf("entrée invalide\n");
         return special_shot(size, tireur, cible, grille);
         break;
     }
+
     return NULL;
 }
 
 // standard shoot
-PlayerPtr shoot(int size, PlayerPtr tireur, PlayerPtr cible, int x, int y, Box **grille)
+PlayerPtr standard_shoot_result(int size, PlayerPtr tireur, PlayerPtr cible, int x, int y, Box **grille)
 {
     int *ptr;
-    // int result = status_report(x, y, grille, tireur, cible);
-    if (x > size - 1 || y > size - 1)
+
+    if (grille[x][y].bateau > Close && grille[x][y].shot == false)
     {
-        printf("Cible incorrecte !\n");
-    }
-    else
-    {
-        if (grille[x][y].bateau > Close && grille[x][y].shot == false)
+        tireur->lastShotSuccess = true;
+        grille[x][y].shot = true;
+        switch (grille[x][y].bateau)
         {
-            tireur->lastShotSuccess = true;
-            grille[x][y].shot = true;
-            switch (grille[x][y].bateau)
-            {
-            case PorteAvion:
-                ptr = &(cible->porteAvion);
-                break;
-            case Croiseur:
-                ptr = &(cible->croiseur);
-                break;
-            case Destroyer:
-                ptr = &(cible->destroyer);
-                break;
-            case SousMarin:
-                ptr = &(cible->sousMarin);
-                break;
-            case Torpilleur:
-                ptr = &(cible->torpilleur);
-                break;
-            default:
-                // Null and close: do nothing
-                ;
-            }
-            printf("%d ", *ptr);
-            (*ptr)--;
-            printf("-> %d ", *ptr);
-            if (*ptr)
-            {
-                printf("Touche !\n");
+        case PorteAvion:
+            ptr = &(cible->porteAvion);
+            break;
+        case Croiseur:
+            ptr = &(cible->croiseur);
+            break;
+        case Destroyer:
+            ptr = &(cible->destroyer);
+            break;
+        case SousMarin:
+            ptr = &(cible->sousMarin);
+            break;
+        case Torpilleur:
+            ptr = &(cible->torpilleur);
+            break;
+        default:
+            // Null and close: do nothing
+            ;
+        }
+        printf("%d ", *ptr);
+        (*ptr)--;
+        printf("-> %d ", *ptr);
+        if (*ptr)
+        {
+            printf("Touche !\n");
 
-                printGrilles(size, tireur->grille, cible->grille);
-                // ask to use special shots
-                return special_shot(size, tireur, cible, grille);
-            }
-            else
-            {
-                printf("Coule !\n");
-                printGrilles(size, tireur->grille, cible->grille);
-
-                // if all boats are hit, becomes 0
-                if (!((cible->porteAvion) + (cible->croiseur) + (cible->destroyer) + (cible->sousMarin) + (cible->torpilleur)))
-                {
-                    // return the winner
-                    return tireur;
-                }
-                else
-                {
-                    // ask to use special shots
-                    return special_shot(size, tireur, cible, grille);
-                }
-            }
+            printGrilles(size, tireur->grille, cible->grille);
+            // ask to use special shots
+            return special_shot(size, tireur, cible, grille);
         }
         else
         {
-            tireur->lastShotSuccess = false;
-            grille[x][y].shot = true;
-            printf("Dans l'eau...\n");
+            printf("Coule !\n");
+            printGrilles(size, tireur->grille, cible->grille);
+
+            // if all boats are hit, becomes 0
+            if (!((cible->porteAvion) + (cible->croiseur) + (cible->destroyer) + (cible->sousMarin) + (cible->torpilleur)))
+            {
+                // return the winner
+                return tireur;
+            }
+            else
+            {
+                // ask to use special shots
+                return special_shot(size, tireur, cible, grille);
+            }
         }
     }
+    else
+    {
+        tireur->lastShotSuccess = false;
+        grille[x][y].shot = true;
+        printf("Dans l'eau...\n");
+    }
+
     return NULL;
 }
 
 PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
 {
-    int tmp = 0;
-    char cible[6], x[] = "   ", y[] = "  ", *ptrx = x, *ptry = y;
-    //-----------------regex----------------------------------------
-    regex_t regex;
-    regex_t regex2;
-    int value, value2;
-    // create regex
-    value = regcomp(&regex, "[1-9][0-9]{0,2}[a-zA-Z]{1,2}", REG_EXTENDED);
-    value2 = regcomp(&regex2, "[a-zA-Z]{1,2}[1-9][0-9]{0,2}", REG_EXTENDED);
-
-    if (value == 0 && value2 == 0)
-    {
-        // printf("RegEx compiled successfully.\n");
-    }
-    else
-    {
-        printf("Compilation error.");
-    }
+    char conversation[6];
+    int x, y;
+    PlayerPtr result;
+    Box **(*att_ptr)(int, int, int);
+    reset_reponse(joueur);
     //------------------------------------------------------
 
     printf("\nEntrer les coordonnees de la cible (ex: '3A') : ");
-    scanf("%s", cible);
-    // strcpy(cible, "3cc");
-    if (!strcmp(cible, "stop"))
+    scanf("%s", conversation);
+    if (!strcmp(conversation, "stop"))
     {
         return IA;
     }
-    else if (!strcmp(cible, "save"))
+    else if (!strcmp(conversation, "save"))
     {
         return IA;
     }
-    else
-    {
-        value = regexec(&regex, cible, 0, NULL, 0);
-        value2 = regexec(&regex2, cible, 0, NULL, 0);
-        // if it matches the pattern
-        if (value == 0 || value2 == 0)
-        {
 
-            for (int i = 0; cible[i] != '\0'; i++)
-            {
-                if (cible[i] >= '0' && cible[i] <= '9')
-                {
-                    if (*ptrx == ' ')
-                    {
-                        *ptrx = cible[i];
-                        ptrx++;
-                    }
-                    else
-                    {
-                        printf("Cible incorrecte !\n");
-                        return play(size, joueur, IA);
-                    }
-                }
-                else if ((cible[i] >= 'A' && cible[i] <= 'Z') || (cible[i] >= 'a' && cible[i] <= 'z'))
-                {
-                    if (*ptry == ' ')
-                    {
-                        *ptry = cible[i];
-                        ptry++;
-                    }
-                    else
-                    {
-                        printf("Cible incorrecte !\n");
-                        return play(size, joueur, IA);
-                    }
-                }
-                else
-                {
-                    printf("Cible incorrecte !\n");
-                    return play(size, joueur, IA);
-                }
-            }
-        }
-        if (ptry == y || ptrx == x)
+    if (validate_reponse(conversation, joueur))
+    {
+        // contains one number and at least one letter
+        if (joueur->rep->num != 0 && strlen(joueur->rep->alphbet) > 0)
         {
-            return play(size, joueur, IA);
-        }
-        while (ptry > y)
-        {
-            ptry--;
-            if (*ptry >= 'A' && *ptry <= 'Z')
+            // function pointers
+
+            att_ptr = &range_standard;
+            // mark matrice
+            x = joueur->rep->num;
+            y = convert_letters(joueur->rep->alphbet);
+            // entire row
+            // call function pointer to get the matrix of attack range
+            Box **shoot = att_ptr(x, y, size);
+            // first matrix is the cible, the second matrix is the range matrix
+            // result = matrix_transform(IA->grille, shoot, size, joueur, IA);
+
+            result = standard_shoot_result(size, joueur, IA, x, y, IA->grille);
+
+            free_range_matrix(shoot, size);
+            // set function pointer back to null
+            att_ptr = NULL;
+
+            // result=NULL, game continue, no winner yet
+            if (result == NULL)
             {
-                if (tmp)
-                {
-                    tmp += (*ptry - 64) * 26;
-                }
-                else
-                {
-                    tmp = (*ptry - 64);
-                }
+                printGrilles(size, joueur->grille, IA->grille);
+                return play(size, joueur, IA);
             }
             else
             {
-                if (tmp)
-                {
-                    tmp += (*ptry - 96) * 26;
-                }
-                else
-                {
-                    tmp = (*ptry - 96);
-                }
+                return result; // return the winner
             }
         }
-        return shoot(size, joueur, IA, atoi(x), tmp, IA->grille);
+        else
+        {
+            printf("entrée invalide\n");
+            return play(size, joueur, IA);
+        }
+        reset_reponse(joueur);
+    }
+    else
+    {
+        printf("entrée invalide\n");
+        return play(size, joueur, IA);
     }
 }
 
