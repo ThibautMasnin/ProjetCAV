@@ -35,8 +35,8 @@ typedef struct box
 
 typedef struct reponse
 {
-    int num;
-    char *alphbet;
+    int x; // the row | number, default 0
+    int y; // the column | letter, default 0
 } Reponse;
 
 /*
@@ -216,8 +216,8 @@ int initPlayer(int size, PlayerPtr joueur)
     joueur->tirPlus = 1;
     joueur->tirCarre = 1;
     joueur->rep = malloc(sizeof(Reponse));
-    joueur->rep->num = 0;
-    joueur->rep->alphbet = calloc(3, sizeof(char)); // maximum 2 letters acceptable
+    joueur->rep->x = 0;
+    joueur->rep->y = 0;
 
     if (addShip(size, joueur->grille, PorteAvion))
     {
@@ -378,22 +378,28 @@ void printGrilles(int size, Box **grilleJoueur, Box **grilleIA)
     printf("\n");
 }
 
+int convert_letters(char *s);
 // validate the input and update the reponse filed of player
-int validate_reponse(char *s, PlayerPtr p)
+int validate_reponse(char *s, PlayerPtr p, int size)
 {
     regex_t regex;
     regex_t regex2;
     regex_t regex3;
+
     int value, value2, value3;
-    char num[4];
-    int s_counter = 0;
+    char num[4];    // maximum 3 digits
+    char letter[3]; // maximum 2 letters
+    int tmp_x, tmp_y;
+    tmp_x = tmp_y = 0;
+    // num[] and letter[]  are tempoaray holders of input
+    int l_counter = 0;
     int n_counter = 0;
     // create regex
-    value = regcomp(&regex, "[1-9][0-9]{0,2}[a-zA-Z]{1,2}", REG_EXTENDED);
-    value2 = regcomp(&regex2, "[a-zA-Z]{1,2}[1-9][0-9]{0,2}", REG_EXTENDED);
+    value = regcomp(&regex, "^[1-9][0-9]{0,2}[a-zA-Z]{1,2}$", REG_EXTENDED);
+    value2 = regcomp(&regex2, "^[a-zA-Z]{1,2}[1-9][0-9]{0,2}$", REG_EXTENDED);
 
     // regex3 to match only letters or only numbers
-    value3 = regcomp(&regex3, "([a-zA-Z]{1,2}|[1-9][0-9]{0,2}){1}", REG_EXTENDED);
+    value3 = regcomp(&regex3, "^([a-zA-Z]{1,2}|[1-9][0-9]{0,2}){1}$", REG_EXTENDED);
 
     if (value == 0 && value2 == 0 && value3 == 0)
     {
@@ -408,6 +414,43 @@ int validate_reponse(char *s, PlayerPtr p)
     value = regexec(&regex, s, 0, NULL, 0);
     value2 = regexec(&regex2, s, 0, NULL, 0);
     value3 = regexec(&regex3, s, 0, NULL, 0);
+
+    //--------------process choice(or grid size) only -----------------
+    // size=0 means it will check for rep->choice only;
+
+    if (size == 0)
+    {
+        // match pattern
+        if (value3 == 0)
+        {
+
+            while (*s)
+            {
+                if (isdigit(*s))
+                {
+                    num[n_counter++] = *s;
+                }
+
+                s++;
+            }
+            num[n_counter] = '\0';
+            tmp_x = atoi(num);
+            if (tmp_x > 0)
+            {
+                return tmp_x; // return user numeric input
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    //--------------process choice(or grid size) only -----------------
+
     // if it matches the pattern
     if (value == 0 || value2 == 0 || value3 == 0)
     {
@@ -415,7 +458,7 @@ int validate_reponse(char *s, PlayerPtr p)
         {
             if (isalpha(*s))
             {
-                p->rep->alphbet[s_counter++] = *s;
+                letter[l_counter++] = *s;
             }
             else if (isdigit(*s))
             {
@@ -425,12 +468,27 @@ int validate_reponse(char *s, PlayerPtr p)
             s++;
         }
         num[n_counter] = '\0';
-        p->rep->alphbet[s_counter] = '\0';
+        letter[l_counter] = '\0';
         if (strlen(num) > 0)
         {
-            p->rep->num = atoi(num);
+            tmp_x = atoi(num);
         }
+        if (strlen(letter) > 0)
+        {
+            tmp_y = convert_letters(letter); // convert the alphbetical input to numbers
+        }
+
+        if (tmp_x > 0 && tmp_x < size)
+        {
+            p->rep->x = tmp_x; // only take x when x is in the grid
+        }
+        if (tmp_y > 0 && tmp_y < size)
+        {
+            p->rep->y = tmp_y; // only take y when y is in the grid
+        }
+
         return 1; // response valid and update the fileds of player
+        // return 1 only means the input contains letters or numbers
     }
     else
     {
@@ -466,11 +524,8 @@ int convert_letters(char *s)
 
 void reset_reponse(PlayerPtr p)
 {
-    p->rep->num = 0;
-    for (int i = 0; i < 2; i++)
-    {
-        p->rep->alphbet[i] = '\0';
-    }
+    p->rep->x = 0;
+    p->rep->y = 0;
 }
 
 // return a matrix that the attack_range has covered
@@ -699,9 +754,9 @@ int status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr cible)
 
 PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille)
 {
-    int choix = -1;
+    int choix = 0;
     char conversation[6];
-    int x, y;
+    char input[4]; // temp holder of choix
     int result;
     int check = 0; // check if there are special shots left
     // function pointers
@@ -732,21 +787,24 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
     {
         return NULL; // no shots left
     }
-    printf("\nEntrer 0 pour ne pas utilier ultimate\n");
+    printf("\nEntrer 5 pour ne pas utilier ultimate\n");
     //----------------------
+    scanf("%s", input);
 
-    if (scanf("%d", &choix) == 0)
+    choix = validate_reponse(input, tireur, 0);
+    // if choix is still 0 after input
+    if (!choix)
     {
-        fflush(stdin);
         printf("entrée invalide\n");
         return special_shot(size, tireur, cible, grille);
     }
+
     // reset before taking new coordinates
     reset_reponse(tireur);
 
     switch (choix)
     {
-    case 0:
+    case 5: // no need to deal with input starting from 0
         break;
     case 1:
         if (tireur->tirLigne && tireur->sousMarin != 0)
@@ -755,13 +813,11 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
             printf("Tir en ligne : Entrer une lettre pour une colonne, un chiffre pour un rang\n");
             // escape the newline from the previous scanf
             scanf(" %s", conversation);
-            if (validate_reponse(conversation, tireur))
+            if (validate_reponse(conversation, tireur, size))
             {
-                printf("%d,%s", tireur->rep->num, tireur->rep->alphbet);
 
-                // if it contains numbers and letters at the same time
-                // return errors
-                if (tireur->rep->num != 0 && strlen(tireur->rep->alphbet) > 0)
+                // if it contains numbers and letters at the same time, return errors
+                if (tireur->rep->x != 0 && tireur->rep->y != 0)
                 {
                     printf("entrée invalide\n");
                     return special_shot(size, tireur, cible, grille);
@@ -771,54 +827,38 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
                     att_ptr = &range_ligne;
 
                     // mark matrice
-                    if (tireur->rep->num != 0)
+                    if (tireur->rep->x != 0)
                     {
-                        x = tireur->rep->num;
-                        if (x > 0 && x < size)
-                        {
-                            // entire row
-                            // call function pointer to get the matrix of attack range
-                            Box **ult = att_ptr(x, 0, size);
-                            // pass the attack matrix to compare with the original
-                            result = matrix_transform(grille, ult, size, tireur, cible);
 
-                            free_range_matrix(ult, size);
-                            att_ptr = NULL;
+                        // entire row
+                        // call function pointer to get the matrix of attack range
+                        Box **ult = att_ptr(tireur->rep->x, 0, size);
+                        // pass the attack matrix to compare with the original
+                        result = matrix_transform(grille, ult, size, tireur, cible);
 
-                            // tirLigne used
-                            tireur->tirLigne = 0;
-                            if (result)
-                            {
-                                return tireur; // return the winner
-                            }
-                        }
-                        else
+                        free_range_matrix(ult, size);
+                        att_ptr = NULL;
+
+                        // tirLigne used
+                        tireur->tirLigne = 0;
+                        if (result)
                         {
-                            printf("entrée invalide\n");
-                            return special_shot(size, tireur, cible, grille);
+                            return tireur; // return the winner
                         }
                     }
-                    else if (strlen(tireur->rep->alphbet) > 0)
+                    else if (tireur->rep->y != 0)
                     {
-                        y = convert_letters(tireur->rep->alphbet);
-                        if (y > 0 && y < size)
-                        {
-                            Box **ult = att_ptr(0, y, size);
-                            // entire column
-                            result = matrix_transform(grille, ult, size, tireur, cible);
 
-                            free_range_matrix(ult, size);
-                            att_ptr = NULL;
-                            tireur->tirLigne = 0;
-                            if (result)
-                            {
-                                return tireur; // return the winner
-                            }
-                        }
-                        else
+                        Box **ult = att_ptr(0, tireur->rep->y, size);
+                        // entire column
+                        result = matrix_transform(grille, ult, size, tireur, cible);
+
+                        free_range_matrix(ult, size);
+                        att_ptr = NULL;
+                        tireur->tirLigne = 0;
+                        if (result)
                         {
-                            printf("entrée invalide\n");
-                            return special_shot(size, tireur, cible, grille);
+                            return tireur; // return the winner
                         }
                     }
                 }
@@ -841,41 +881,29 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
 
             printf("Tir en Croix : les coordonnees du centre de ce tir special(ex: '3A'):\n");
             scanf("%s", conversation);
-            if (validate_reponse(conversation, tireur))
+            if (validate_reponse(conversation, tireur, size))
             {
                 // contains one number and at least one letter
-                if (tireur->rep->num != 0 && strlen(tireur->rep->alphbet) > 0)
+                if (tireur->rep->x != 0 && tireur->rep->y != 0)
                 {
                     // function pointers
-
                     att_ptr = &range_croix;
                     // mark matrice
 
-                    x = tireur->rep->num;
-                    y = convert_letters(tireur->rep->alphbet);
-                    // make sure x,y is in the grille
-                    if (x > 0 && x < size && y > 0 && y < size)
-                    {
-                        // entire row
-                        // call function pointer to get the matrix of attack range
-                        Box **ult = att_ptr(x, y, size);
-                        // pass the attack matrix to compare with the original
-                        result = matrix_transform(grille, ult, size, tireur, cible);
-                        free_range_matrix(ult, size);
-                        // set function pointer back to null
-                        att_ptr = NULL;
+                    // entire row
+                    // call function pointer to get the matrix of attack range
+                    Box **ult = att_ptr(tireur->rep->x, tireur->rep->y, size);
+                    // pass the attack matrix to compare with the original
+                    result = matrix_transform(grille, ult, size, tireur, cible);
+                    free_range_matrix(ult, size);
+                    // set function pointer back to null
+                    att_ptr = NULL;
 
-                        // tirCroix set to 'used'
-                        tireur->tirCroix = 0;
-                        if (result)
-                        {
-                            return tireur; // return the winner
-                        }
-                    }
-                    else
+                    // tirCroix set to 'used'
+                    tireur->tirCroix = 0;
+                    if (result)
                     {
-                        printf("entrée invalide\n");
-                        return special_shot(size, tireur, cible, grille);
+                        return tireur; // return the winner
                     }
                 }
                 else
@@ -902,41 +930,30 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
 
             printf("Tir en Plus : les coordonnees de du centre de ce tir special(ex: '3A'):\n");
             scanf(" %s", conversation);
-            if (validate_reponse(conversation, tireur))
+            if (validate_reponse(conversation, tireur, size))
             {
                 // contains one number and at least one letter
-                if (tireur->rep->num != 0 && strlen(tireur->rep->alphbet) > 0)
+                if (tireur->rep->x != 0 && tireur->rep->y != 0)
                 {
                     // function pointers
 
                     att_ptr = &range_plus;
                     // mark matrice
-                    // make sure x,y is in the grille
 
-                    x = tireur->rep->num;
-                    y = convert_letters(tireur->rep->alphbet);
-                    if (x > 0 && x < size && y > 0 && y < size)
-                    {
-                        // entire row
-                        // call function pointer to get the matrix of attack range
-                        Box **ult = att_ptr(x, y, size);
-                        // pass the attack matrix to compare with the original
-                        result = matrix_transform(grille, ult, size, tireur, cible);
-                        free_range_matrix(ult, size);
-                        // set function pointer back to null
-                        att_ptr = NULL;
+                    // entire row
+                    // call function pointer to get the matrix of attack range
+                    Box **ult = att_ptr(tireur->rep->x, tireur->rep->y, size);
+                    // pass the attack matrix to compare with the original
+                    result = matrix_transform(grille, ult, size, tireur, cible);
+                    free_range_matrix(ult, size);
+                    // set function pointer back to null
+                    att_ptr = NULL;
 
-                        // tirCroix set to 'used'
-                        tireur->tirPlus = 0;
-                        if (result)
-                        {
-                            return tireur; // return the winner
-                        }
-                    }
-                    else
+                    // tirCroix set to 'used'
+                    tireur->tirPlus = 0;
+                    if (result)
                     {
-                        printf("entrée invalide\n");
-                        return special_shot(size, tireur, cible, grille);
+                        return tireur; // return the winner
                     }
                 }
                 else
@@ -963,40 +980,29 @@ PlayerPtr special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille
 
             printf("Tir en Carre : les coordonnees de du centre de ce tir special(ex: '3A'):\n");
             scanf(" %s", conversation);
-            if (validate_reponse(conversation, tireur))
+            if (validate_reponse(conversation, tireur, size))
             {
                 // contains one number and at least one letter
-                if (tireur->rep->num != 0 && strlen(tireur->rep->alphbet) > 0)
+                if (tireur->rep->x != 0 && tireur->rep->y != 0)
                 {
                     // function pointers
 
                     att_ptr = &range_carre;
                     // mark matrice
+                    // entire row
+                    // call function pointer to get the matrix of attack range
+                    Box **ult = att_ptr(tireur->rep->x, tireur->rep->y, size);
+                    // pass the attack matrix to compare with the original
+                    result = matrix_transform(grille, ult, size, tireur, cible);
+                    free_range_matrix(ult, size);
+                    // set function pointer back to null
+                    att_ptr = NULL;
 
-                    x = tireur->rep->num;
-                    y = convert_letters(tireur->rep->alphbet);
-                    if (x > 0 && x < size && y > 0 && y < size)
+                    // tirCroix set to 'used'
+                    tireur->tirCarre = 0;
+                    if (result)
                     {
-                        // entire row
-                        // call function pointer to get the matrix of attack range
-                        Box **ult = att_ptr(x, y, size);
-                        // pass the attack matrix to compare with the original
-                        result = matrix_transform(grille, ult, size, tireur, cible);
-                        free_range_matrix(ult, size);
-                        // set function pointer back to null
-                        att_ptr = NULL;
-
-                        // tirCroix set to 'used'
-                        tireur->tirCarre = 0;
-                        if (result)
-                        {
-                            return tireur; // return the winner
-                        }
-                    }
-                    else
-                    {
-                        printf("entrée invalide\n");
-                        return special_shot(size, tireur, cible, grille);
+                        return tireur; // return the winner
                     }
                 }
                 else
@@ -1098,7 +1104,6 @@ PlayerPtr standard_shoot_result(int size, PlayerPtr tireur, PlayerPtr cible, int
 PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
 {
     char conversation[6];
-    int x, y;
     PlayerPtr result;
     Box **(*att_ptr)(int, int, int);
     reset_reponse(joueur);
@@ -1115,49 +1120,39 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
         return IA;
     }
 
-    if (validate_reponse(conversation, joueur))
+    if (validate_reponse(conversation, joueur, size))
     {
         // contains one number and at least one letter
-        if (joueur->rep->num != 0 && strlen(joueur->rep->alphbet) > 0)
+        if (joueur->rep->x != 0 && joueur->rep->y != 0)
         {
             // function pointers
 
             att_ptr = &range_standard;
             // mark matrice
-            x = joueur->rep->num;
-            y = convert_letters(joueur->rep->alphbet);
+
             Box **shoot;
             // entire row
 
             // first matrix is the cible, the second matrix is the range matrix
             // result = matrix_transform(IA->grille, shoot, size, joueur, IA);
 
-            // makesure the attack range is in the grille
-            if (x > 0 && x < size && y > 0 && y < size)
+            // call function pointer to get the matrix of attack range
+            shoot = att_ptr(joueur->rep->x, joueur->rep->y, size);
+            result = standard_shoot_result(size, joueur, IA, joueur->rep->x, joueur->rep->y, IA->grille);
+
+            free_range_matrix(shoot, size);
+            // set function pointer back to null
+            att_ptr = NULL;
+
+            // result=NULL, game continue, no winner yet
+            if (result == NULL)
             {
-                // call function pointer to get the matrix of attack range
-                shoot = att_ptr(x, y, size);
-                result = standard_shoot_result(size, joueur, IA, x, y, IA->grille);
-
-                free_range_matrix(shoot, size);
-                // set function pointer back to null
-                att_ptr = NULL;
-
-                // result=NULL, game continue, no winner yet
-                if (result == NULL)
-                {
-                    printGrilles(size, joueur->grille, IA->grille);
-                    return play(size, joueur, IA);
-                }
-                else
-                {
-                    return result; // return the winner
-                }
+                printGrilles(size, joueur->grille, IA->grille);
+                return play(size, joueur, IA);
             }
             else
             {
-                printf("entrée invalide\n");
-                return play(size, joueur, IA);
+                return result; // return the winner
             }
         }
         else
@@ -1165,7 +1160,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr IA)
             printf("entrée invalide\n");
             return play(size, joueur, IA);
         }
-        reset_reponse(joueur);
+        reset_reponse(joueur); // remember to reset the reponse
     }
     else
     {
@@ -1231,13 +1226,18 @@ void start_game(int size, int attempts, PlayerPtr joueur, PlayerPtr IA)
 int initialization(PlayerPtr joueur, PlayerPtr IA)
 {
     int size = 0;
+    char input[4]; // maximum 3 digits
     while (size < 5 || size > 702)
     {
         printf("Entrer la taille de la grille (entre 5 et 702) : ");
-        if (scanf("%d", &size) == 0)
+        scanf("%s", input);
+        size = validate_reponse(input, joueur, 0); // the third parameter size=0 is a flag check for rep->choice
+        // when third parameter set to 0, it will return the valid numeric input
+        if (!size)
         {
-            fflush(stdin);
-            printf("entrée invalide\n");
+            // invalid input, continue the loop
+            printf("entrée invalid\n");
+            continue;
         }
     }
     size++;
