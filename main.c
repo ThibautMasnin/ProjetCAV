@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
-#include <regex.h>
+#include "regex.h"
 #include <ctype.h>
 
 typedef enum ship
@@ -40,10 +40,10 @@ typedef struct reponse
 } Reponse;
 
 /*
-5 ships: 1 porte-avion (5 cases), 
-1 croiseur (4 cases), 
+5 ships: 1 porte-avion (5 cases),
+1 croiseur (4 cases),
 1 destroyer (3 cases),
-1 sous-marin (3 cases), 
+1 sous-marin (3 cases),
 1 torpilleur (2 cases).
 */
 typedef struct player
