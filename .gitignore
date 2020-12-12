@@ -10,3 +10,6 @@ ProjetCAV.cbp
 ProjetCAV.depend
 ProjetCAV.layout
 main
+bin/Debug
+obj/Debug
+bin
