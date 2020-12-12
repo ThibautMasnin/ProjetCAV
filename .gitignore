@@ -13,3 +13,6 @@ main
 bin/Debug
 obj/Debug
 bin
+regex2.dll
+regex.h
+lib
