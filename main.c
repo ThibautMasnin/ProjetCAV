@@ -754,6 +754,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
     switch (choix)
     {
     case 5: // no need to deal with input starting from 0
+        tireur->lastShotSuccess = false;
         return NULL;
         break;
     case 1:
@@ -1100,9 +1101,10 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
     // the below for the player
     else
     {
-        reset_reponse(joueur);
+
         if (joueur->lastShotSuccess && !att_range)
         {
+            reset_reponse(joueur);
             // to add special shoots conversation:
             // display the special shots that the player has
             printf("\nChoisissez le type de tir :\n");
@@ -1145,6 +1147,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
             switch (choix)
             {
             case 5: // no need to deal with input starting from 0
+                joueur->lastShotSuccess = false;
                 return play(size, joueur, adversaire);
                 break;
             case 1:
@@ -1170,6 +1173,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     printf("Pas de tir en ligne");
                     return play(size, joueur, adversaire);
                 }
+                break;
             case 2:
                 if (joueur->tirCroix && joueur->croiseur != 0)
                 {
@@ -1192,6 +1196,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     printf("Pas de tir en croix");
                     return play(size, joueur, adversaire);
                 }
+                break;
             case 3:
                 if (joueur->tirPlus && joueur->croiseur != 0)
                 {
@@ -1214,6 +1219,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     printf("Pas de tir en plus");
                     return play(size, joueur, adversaire);
                 }
+                break;
             case 4:
                 if (joueur->tirCarre && joueur->porteAvion != 0)
                 {
@@ -1236,6 +1242,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     printf("Pas de tir en carre");
                     return play(size, joueur, adversaire);
                 }
+                break;
             }
             result = matrix_transform(adversaire->grille, att_range, size, joueur, adversaire);
             free_range_matrix(att_range, size);
@@ -1328,8 +1335,8 @@ void start_game(PlayerPtr joueur, PlayerPtr IA)
             printGrilles(size, joueur->grille, IA->grille);
             while (!winner)
             {
-                //winner = play(size, joueur, IA);
-                //printGrilles(size, joueur->grille, IA->grille);
+                winner = play(size, joueur, IA);
+                printGrilles(size, joueur->grille, IA->grille);
                 if (!winner)
                 {
                     winner = play(size, IA, joueur);
