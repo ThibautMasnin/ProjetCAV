@@ -377,7 +377,7 @@ void printGrilles(int size, Box **grilleJoueur, Box **grilleIA)
         }
         printf("---+");
     }
-    printf("\n");
+    printf("\n\n\n");
 }
 // validate the input and update the reponse filed of player
 int validate_reponse(char *s, PlayerPtr p, int size)
@@ -407,7 +407,7 @@ int validate_reponse(char *s, PlayerPtr p, int size)
     }
     else
     {
-        printf("Compilation error.");
+        printf("Erreur de compilation.");
         return 0;
     }
 
@@ -520,6 +520,17 @@ int convert_letters(char *s)
     }
 
     return tmp;
+}
+
+void convert_int(int n, char s[])
+{
+    if(n<=26) {
+        s[1]=(char)(64+n);
+    }
+    else {
+        s[0]=(char)(64+n/26);
+        s[1]=(char)(64+n%26);
+    }
 }
 
 void reset_reponse(PlayerPtr p)
@@ -758,20 +769,17 @@ PlayerPtr status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr 
             // Null and close: do nothing
             ;
         }
-        printf("%d ", *ptr);
         (*ptr)--;
-        printf("-> %d ", *ptr);
         if (*ptr)
         {
             printf("Touche !\n");
         }
         else
         {
-            printf("Coule: !\n");
+            printf("Coule !\n");
             // if all boats are hit, becomes 0
             if (!((cible->porteAvion) + (cible->croiseur) + (cible->destroyer) + (cible->sousMarin) + (cible->torpilleur)))
             {
-
                 return tireur; // return tireur as winner
             }
             else if (tireur->bot && grille[tireur->etat->x][tireur->etat->y].bateau==grille[x][y].bateau)
@@ -814,7 +822,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
         // if it contains numbers and letters at the same time, return errors
         if (tireur->rep->x != 0 && tireur->rep->y != 0)
         {
-            printf("entree invalide 1\n");
+            printf("Entree invalide\n");
             return NULL;
         }
         else
@@ -880,7 +888,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
         }
         else
         {
-            printf("(%d,%d) entree invalide 2\n", tireur->rep->x, tireur->rep->y);
+            printf("Entree invalide\n", tireur->rep->x, tireur->rep->y);
             return NULL;
         }
 
@@ -911,7 +919,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
         }
         else
         {
-            printf("(%d,%d) Pas de tir en plus", tireur->rep->x, tireur->rep->y);
+            printf("Pas de tir en plus", tireur->rep->x, tireur->rep->y);
             return NULL;
         }
         break;
@@ -944,7 +952,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
         }
         break;
     default:
-        printf("entree invalide d\n");
+        printf("Entree invalide\n");
         return NULL;
         break;
     }
@@ -1023,9 +1031,7 @@ PlayerPtr standard_shoot_result(int size, PlayerPtr tireur, PlayerPtr cible, int
             // Null and close: do nothing
             ;
         }
-        printf("%d ", *ptr);
         (*ptr)--;
-        printf("-> %d ", *ptr);
         if (*ptr)
         {
             printf("Touche !\n");
@@ -1074,15 +1080,13 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
     int i = 1, j = 1;
     int check = 0;
     int choix = 5;
-    char conversation[6];
-    char input[4]; // temp holder of choix
+    char conversation[6], letters[3]={' ',' ','\0'}, input[4]; // temp holder of choix
     PlayerPtr result = NULL;
     Box **att_range = NULL;
     Box **(*att_ptr)(int, int, int);
     //------------------------------------------------------
     if (joueur->bot)
     {
-        printf("\nrep :[%d;%d] | etat :[%d;%d] | sens:%d\n", joueur->rep->x, joueur->rep->y, joueur->etat->x, joueur->etat->y, joueur->etat->sens);
         if(joueur->lastShotSuccess && ((joueur->tirLigne && joueur->sousMarin != 0) || (joueur->tirCarre && joueur->porteAvion != 0) || (joueur->tirPlus && joueur->croiseur != 0) || (joueur->tirCroix && joueur->croiseur != 0))) {
             if(joueur->etat->x&&joueur->etat->y) {
                 i=joueur->etat->x;
@@ -1096,9 +1100,12 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                 choix=1;
                 if(joueur->rep->y>joueur->rep->x) {
                     joueur->rep->x=0;
+                    convert_int(joueur->rep->y, letters);
+                    printf("L'ordinateur tir en ligne sur %s.\n", letters);
                 }
                 else {
                     joueur->rep->y=0;
+                    printf("L'ordinateur tir en ligne sur %d.\n", joueur->rep->x);
                 }
             }
             else if (joueur->tirCarre && joueur->porteAvion != 0)
@@ -1106,11 +1113,15 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                 choix=4;
                 joueur->rep->x = i;
                 joueur->rep->y = i;
+                convert_int(joueur->rep->y, letters);
+                printf("L'ordinateur tir en carre sur %s%d.\n", letters, joueur->rep->x);
             }
             else if (joueur->tirPlus && joueur->croiseur != 0) {
                 choix=3;
                 joueur->rep->x = i;
                 joueur->rep->y = j;
+                convert_int(joueur->rep->y, letters);
+                printf("L'ordinateur tir en plus sur %s%d.\n", letters, joueur->rep->x);
             }
             else if (joueur->tirCroix && joueur->croiseur != 0) {
                 choix=2;
@@ -1139,6 +1150,8 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     joueur->rep->x = i;
                     joueur->rep->y = j;
                 }
+                convert_int(joueur->rep->y, letters);
+                printf("L'ordinateur tir en croix sur %s%d.\n", letters, joueur->rep->x);
             }
             else
             {
@@ -1251,7 +1264,6 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                 }
                 else
                 {
-                    printf("\n[%d;%d]\n", joueur->etat->x, joueur->etat->y);
                     if (joueur->etat->y + 1 < size && !adversaire->grille[joueur->etat->x][joueur->etat->y + 1].shot)
                     {
                         i = joueur->etat->x;
@@ -1283,7 +1295,6 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
             {
                 while (adversaire->grille[i][j].shot || (adversaire->grille[i - 1][j].shot && adversaire->grille[i - 1][j].bateau <= Close) && (adversaire->grille[i][j - 1].shot && adversaire->grille[i][j - 1].shot <= Close ))
                 {
-                    printf("%d,", i);
                     if (i + 2 > size)
                     {
                         i = 1;
@@ -1302,8 +1313,9 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
             }
             joueur->rep->x = i;
             joueur->rep->y = j;
+            convert_int(joueur->rep->y, letters);
+            printf("L'ordinateur tir sur %s%d.\n", letters, joueur->rep->x);
             result = standard_shoot_result(size, joueur, adversaire, i, j, adversaire->grille);
-            printf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!! TOUR DU BOT : (%d,%d) !!!!!!!!!!!!!!!!!!!!!\n\n", i, j);
         }
     }
     // the above for the bot
@@ -1311,7 +1323,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
     else
     {
 
-        if (joueur->lastShotSuccess && !att_range)
+        if (joueur->lastShotSuccess && ((joueur->tirLigne && joueur->sousMarin != 0) || (joueur->tirCarre && joueur->porteAvion != 0) || (joueur->tirPlus && joueur->croiseur != 0) || (joueur->tirCroix && joueur->croiseur != 0)) && !att_range)
         {
             reset_reponse(joueur);
             // to add special shoots conversation:
@@ -1349,7 +1361,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
             // if choix is still 0 after input
             if (!choix)
             {
-                printf("entree invalide\n");
+                printf("Entree invalide\n");
                 return play(size, joueur, adversaire);
             }
             reset_reponse(joueur); // delete the choix from reponse;
@@ -1363,7 +1375,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                 if (joueur->tirLigne && joueur->sousMarin != 0)
                 {
 
-                    printf("Tir en ligne : Entrer une lettre pour une colonne, un chiffre pour un rang\n");
+                    printf("Tir en ligne : Entrer une lettre pour tirer sur une colonne ou un chiffre pour tirer sur une ligne\n");
                     // escape the newline from the previous scanf
                     scanf(" %s", conversation);
                     if (validate_reponse(conversation, joueur, size))
@@ -1373,7 +1385,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     }
                     else
                     {
-                        printf("entrée invalide");
+                        printf("Entree invalide");
                         return play(size, joueur, adversaire);
                     }
                 }
@@ -1387,7 +1399,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                 if (joueur->tirCroix && joueur->croiseur != 0)
                 {
 
-                    printf("Tir en Croix : les coordonnees du centre de ce tir special(ex: '3A'): ");
+                    printf("Tir en Croix : Entrer les coordonnees du centre de ce tir (ex: '3A'): ");
                     scanf(" %s", conversation);
                     if (validate_reponse(conversation, joueur, size))
                     {
@@ -1396,7 +1408,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     }
                     else
                     {
-                        printf("entrée invalide");
+                        printf("Entree invalide");
                         return play(size, joueur, adversaire);
                     }
                 }
@@ -1410,7 +1422,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                 if (joueur->tirPlus && joueur->croiseur != 0)
                 {
 
-                    printf("Tir en Plus : les coordonnees de du centre de ce tir special(ex: '3A'): ");
+                    printf("Tir en Plus : Entrer les coordonnees du centre de ce tir (ex: '3A'): ");
                     scanf(" %s", conversation);
                     if (validate_reponse(conversation, joueur, size))
                     {
@@ -1419,7 +1431,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     }
                     else
                     {
-                        printf("entrée invalide");
+                        printf("Entree invalide");
                         return play(size, joueur, adversaire);
                     }
                 }
@@ -1432,7 +1444,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
             case 4:
                 if (joueur->tirCarre && joueur->porteAvion != 0)
                 {
-                    printf("Tir en Carre : les coordonnees de du centre de ce tir special(ex: '3A'): ");
+                    printf("Tir en Carre : Entrer les coordonnees du centre de ce tir (ex: '3A'): ");
                     // escape the newline from the previous scanf
                     scanf(" %s", conversation);
                     if (validate_reponse(conversation, joueur, size))
@@ -1442,7 +1454,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                     }
                     else
                     {
-                        printf("entrée invalide");
+                        printf("Entree invalide");
                         return play(size, joueur, adversaire);
                     }
                 }
@@ -1464,11 +1476,6 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
             {
                 return adversaire;
             }
-            else if (!strcmp(conversation, "save"))
-            {
-                return adversaire;
-            }
-
             if (validate_reponse(conversation, joueur, size))
             {
                 // contains one number and at least one letter
@@ -1496,14 +1503,14 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
                 }
                 else
                 {
-                    printf("entree invalide\n");
+                    printf("Entree invalide\n");
                     return play(size, joueur, adversaire);
                 }
                 //reset_reponse(joueur); // remember to reset the reponse
             }
             else
             {
-                printf("entree invalide\n");
+                printf("Entree invalide\n");
                 return play(size, joueur, adversaire);
             }
         }
@@ -1548,6 +1555,7 @@ void start_game(PlayerPtr joueur, PlayerPtr IA)
             }
             else {
                 printf(" Debut de la partie, c'est l'IA qui commence. Bonne chance !");
+
             }
             printf("  |\n\t\t------------------------------------------------------------------\n");
             printGrilles(size, joueur->grille, IA->grille);
