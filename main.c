@@ -79,7 +79,12 @@ void initGrille(int size, Box **grille)
     {
         for (j = 0; j < size; j++)
         {
-            grille[i][j].shot = false;
+            if(i&&j) {
+                grille[i][j].shot = false;
+            }
+            else {
+                grille[i][j].shot = true;
+            }
             grille[i][j].bateau = Null;
         }
     }
@@ -657,7 +662,7 @@ Box **range_standard(int x, int y, int size)
     return range;
 }
 
-PlayerPtr status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr cible);
+PlayerPtr status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr cible, int size);
 PlayerPtr matrix_transform(Box **grille, Box **ult, int size, PlayerPtr tireur, PlayerPtr cible)
 {
     PlayerPtr result;
@@ -668,7 +673,7 @@ PlayerPtr matrix_transform(Box **grille, Box **ult, int size, PlayerPtr tireur, 
             // mark the shot cell of ultimate to the grille in status_report
             if (ult[i][j].shot && !grille[i][j].shot)
             {
-                result = status_report(i, j, grille, tireur, cible);
+                result = status_report(i, j, grille, tireur, cible, size);
             }
         }
     }
@@ -688,14 +693,50 @@ void free_range_matrix(Box **b, int size)
     free(b);
 }
 
-PlayerPtr status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr cible)
+PlayerPtr status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr cible, int size)
 {
     int *ptr;
 
     if (grille[x][y].bateau > Close && grille[x][y].shot == false)
     {
         grille[x][y].shot = true;
-
+        if (tireur->bot)
+        {
+            if (tireur->etat->x && grille[tireur->etat->x][tireur->etat->y].bateau==grille[x][y].bateau)
+            {
+                if (tireur->etat->x != x)
+                {
+                    tireur->etat->sens = Vertical;
+                }
+                else
+                {
+                    tireur->etat->sens = Horizontal;
+                }
+            }
+            else if (!tireur->etat->x)
+            {
+                if(grille[x-1][y].shot && grille[x-1][y].bateau > Close) {
+                    tireur->etat->x = x-1;
+                    tireur->etat->y = y;
+                }
+                else if(x + 1 < size && grille[x+1][y].shot && grille[x+1][y].bateau > Close) {
+                    tireur->etat->x = x+1;
+                    tireur->etat->y = y;
+                }
+                else if(grille[x][y-1].shot && grille[x][y-1].bateau > Close) {
+                    tireur->etat->x = x;
+                    tireur->etat->y = y-1;
+                }
+                else if(y + 1 < size && grille[x][y+1].shot && grille[x][y+1].bateau > Close) {
+                    tireur->etat->x = x;
+                    tireur->etat->y = y+1;
+                }
+                else {
+                    tireur->etat->x = x;
+                    tireur->etat->y = y;
+                }
+            }
+        }
         switch (grille[x][y].bateau)
         {
         case PorteAvion:
@@ -733,10 +774,21 @@ PlayerPtr status_report(int x, int y, Box **grille, PlayerPtr tireur, PlayerPtr 
 
                 return tireur; // return tireur as winner
             }
+            else if (tireur->bot && grille[tireur->etat->x][tireur->etat->y].bateau==grille[x][y].bateau)
+            {
+                tireur->etat->x = 0;
+                tireur->etat->y = 0;
+                tireur->etat->sens = Inconnue;
+            }
         }
     }
     else
     {
+        if (tireur->bot && tireur->etat->x)
+        {
+            tireur->rep->x = tireur->etat->x;
+            tireur->rep->y = tireur->etat->y;
+        }
         printf("Dans l'eau...\n");
         grille[x][y].shot = true;
     }
@@ -762,7 +814,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
         // if it contains numbers and letters at the same time, return errors
         if (tireur->rep->x != 0 && tireur->rep->y != 0)
         {
-            printf("entree invalide\n");
+            printf("entree invalide 1\n");
             return NULL;
         }
         else
@@ -828,7 +880,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
         }
         else
         {
-            printf("entree invalide\n");
+            printf("(%d,%d) entree invalide 2\n", tireur->rep->x, tireur->rep->y);
             return NULL;
         }
 
@@ -859,7 +911,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
         }
         else
         {
-            printf("Pas de tir en plus");
+            printf("(%d,%d) Pas de tir en plus", tireur->rep->x, tireur->rep->y);
             return NULL;
         }
         break;
@@ -892,7 +944,7 @@ Box **special_shot(int size, PlayerPtr tireur, PlayerPtr cible, Box **grille, in
         }
         break;
     default:
-        printf("entree invalide\n");
+        printf("entree invalide d\n");
         return NULL;
         break;
     }
@@ -924,8 +976,30 @@ PlayerPtr standard_shoot_result(int size, PlayerPtr tireur, PlayerPtr cible, int
             }
             else
             {
-                tireur->etat->x = x;
-                tireur->etat->y = y;
+                if(grille[x-1][y].shot && grille[x-1][y].bateau > Close) {
+                    tireur->etat->x = x-1;
+                    tireur->etat->y = y;
+                    tireur->etat->sens = Vertical;
+                }
+                else if(x + 1 < size && grille[x+1][y].shot && grille[x+1][y].bateau > Close) {
+                    tireur->etat->x = x+1;
+                    tireur->etat->y = y;
+                    tireur->etat->sens = Vertical;
+                }
+                else if(grille[x][y-1].shot && grille[x][y-1].bateau > Close) {
+                    tireur->etat->x = x;
+                    tireur->etat->y = y-1;
+                    tireur->etat->sens = Horizontal;
+                }
+                else if(y + 1 < size && grille[x][y+1].shot && grille[x][y+1].bateau > Close) {
+                    tireur->etat->x = x;
+                    tireur->etat->y = y+1;
+                    tireur->etat->sens = Horizontal;
+                }
+                else {
+                    tireur->etat->x = x;
+                    tireur->etat->y = y;
+                }
             }
         }
         switch (grille[x][y].bateau)
@@ -982,13 +1056,10 @@ PlayerPtr standard_shoot_result(int size, PlayerPtr tireur, PlayerPtr cible, int
     }
     else
     {
-        if (tireur->bot)
+        if (tireur->bot && tireur->etat->x)
         {
-            if (tireur->etat->x)
-            {
-                tireur->rep->x = tireur->etat->x;
-                tireur->rep->y = tireur->etat->y;
-            }
+            tireur->rep->x = tireur->etat->x;
+            tireur->rep->y = tireur->etat->y;
         }
         tireur->lastShotSuccess = false;
         grille[x][y].shot = true;
@@ -1002,7 +1073,7 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
 {
     int i = 1, j = 1;
     int check = 0;
-    int choix = 0;
+    int choix = 5;
     char conversation[6];
     char input[4]; // temp holder of choix
     PlayerPtr result = NULL;
@@ -1011,91 +1082,229 @@ PlayerPtr play(int size, PlayerPtr joueur, PlayerPtr adversaire)
     //------------------------------------------------------
     if (joueur->bot)
     {
-        /*if(joueur->lastShotSuccess) {
-            printf("\n[%d;%d]\n", joueur->etat->x, joueur->etat->y);
-            //result = special_shot(size, joueur, adversaire, adversaire->grille);
-            joueur->lastShotSuccess=false;
-        }
-        else { */
-        if (joueur->etat->x)
-        {
-            if (joueur->etat->sens == Horizontal)
-            {
-                if (adversaire->grille[joueur->rep->x][joueur->rep->y].bateau > Close && joueur->rep->y + 1 < size && !adversaire->grille[joueur->rep->x][joueur->rep->y + 1].shot)
-                {
-                    i = joueur->rep->x;
-                    j = joueur->rep->y + 1;
+        printf("\nrep :[%d;%d] | etat :[%d;%d] | sens:%d\n", joueur->rep->x, joueur->rep->y, joueur->etat->x, joueur->etat->y, joueur->etat->sens);
+        if(joueur->lastShotSuccess && ((joueur->tirLigne && joueur->sousMarin != 0) || (joueur->tirCarre && joueur->porteAvion != 0) || (joueur->tirPlus && joueur->croiseur != 0) || (joueur->tirCroix && joueur->croiseur != 0))) {
+            if(joueur->etat->x&&joueur->etat->y) {
+                i=joueur->etat->x;
+                j=joueur->etat->y;
+            }
+            else {
+                i=size/2;
+                j=size/2;
+            }
+            if (joueur->tirLigne && joueur->sousMarin != 0) {
+                choix=1;
+                if(joueur->rep->y>joueur->rep->x) {
+                    joueur->rep->x=0;
                 }
-                else
-                {
-                    i = joueur->rep->x;
-                    j = joueur->rep->y - 1;
+                else {
+                    joueur->rep->y=0;
                 }
             }
-            else if (joueur->etat->sens == Vertical)
+            else if (joueur->tirCarre && joueur->porteAvion != 0)
             {
-                if (adversaire->grille[joueur->rep->x][joueur->rep->y].bateau > Close && joueur->rep->x + 1 < size && !adversaire->grille[joueur->rep->x + 1][joueur->rep->y].shot)
+                choix=4;
+                joueur->rep->x = i;
+                joueur->rep->y = i;
+            }
+            else if (joueur->tirPlus && joueur->croiseur != 0) {
+                choix=3;
+                joueur->rep->x = i;
+                joueur->rep->y = j;
+            }
+            else if (joueur->tirCroix && joueur->croiseur != 0) {
+                choix=2;
+                if (j + 1 < size && !adversaire->grille[i][j + 1].shot)
                 {
-                    i = joueur->rep->x + 1;
-                    j = joueur->rep->y;
+                    joueur->rep->x = i;
+                    joueur->rep->y = j;
+                }
+                else if (i + 1 < size && !adversaire->grille[i + 1][j].shot)
+                {
+                    joueur->rep->x = i + 1;
+                    joueur->rep->y = j;
+                }
+                else if (j - 1 > 0 && !adversaire->grille[i][j - 1].shot)
+                {
+                    joueur->rep->x = i;
+                    joueur->rep->y = j - 1;
+                }
+                else if (i - 1 > 0 && !adversaire->grille[i - 1][j].shot)
+                {
+                    joueur->rep->x = i - 1;
+                    joueur->rep->y = j;
                 }
                 else
                 {
-                    i = joueur->rep->x - 1;
-                    j = joueur->rep->y;
+                    joueur->rep->x = i;
+                    joueur->rep->y = j;
                 }
             }
             else
             {
-                printf("\n[%d;%d]\n", joueur->etat->x, joueur->etat->y);
-                if (joueur->etat->y + 1 < size && !adversaire->grille[joueur->etat->x][joueur->etat->y + 1].shot)
-                {
-                    i = joueur->etat->x;
-                    j = joueur->etat->y + 1;
-                }
-                else if (joueur->etat->x + 1 < size && !adversaire->grille[joueur->etat->x + 1][joueur->etat->y].shot)
-                {
-                    i = joueur->etat->x + 1;
-                    j = joueur->etat->y;
-                }
-                else if (joueur->etat->y - 1 > 0 && !adversaire->grille[joueur->etat->x][joueur->etat->y - 1].shot)
-                {
-                    i = joueur->etat->x;
-                    j = joueur->etat->y - 1;
-                }
-                else if (joueur->etat->x - 1 > 0 && !adversaire->grille[joueur->etat->x - 1][joueur->etat->y].shot)
-                {
-                    i = joueur->etat->x - 1;
-                    j = joueur->etat->y;
-                }
-                else
-                {
-                    printf("Erreur de l'IA\n");
-                    exit(EXIT_FAILURE);
-                }
+                printf("Erreur de l'IA (special shot)\n");
+                exit(EXIT_FAILURE);
             }
+            att_range = special_shot(size, joueur, adversaire, adversaire->grille, choix);
+            result = matrix_transform(adversaire->grille, att_range, size, joueur, adversaire);
+            free_range_matrix(att_range, size);
+            joueur->lastShotSuccess=false;
         }
-        else
-        {
-            while (adversaire->grille[i - 1][j].shot || adversaire->grille[i][j].shot || (i + 1 < size && adversaire->grille[i + 1][j].shot) || (j + 1 < size && adversaire->grille[i][j + 1].shot) || adversaire->grille[i][j - 1].shot)
+        else {
+            if (joueur->etat->x)
             {
-                printf("%d,", i);
-                if (i + 2 > size)
+                if (joueur->etat->sens == Horizontal)
                 {
-                    i = 1;
-                    j++;
+                    if (joueur->rep->y + 1 < size && adversaire->grille[joueur->rep->x][joueur->rep->y].bateau > Close && !adversaire->grille[joueur->rep->x][joueur->rep->y + 1].shot)
+                    {
+                        i = joueur->rep->x;
+                        j = joueur->rep->y + 1;
+                    }
+                    else if(joueur->rep->y + 2 && adversaire->grille[joueur->rep->x][joueur->rep->y + 1].shot < size && adversaire->grille[joueur->rep->x][joueur->rep->y + 1].bateau > Close && !adversaire->grille[joueur->rep->x][joueur->rep->y + 2].shot)
+                    {
+                        i = joueur->rep->x;
+                        j = joueur->rep->y + 2;
+                    }
+                    else if(joueur->rep->y + 3 < size && adversaire->grille[joueur->rep->x][joueur->rep->y + 2].shot && adversaire->grille[joueur->rep->x][joueur->rep->y + 2].bateau > Close && !adversaire->grille[joueur->rep->x][joueur->rep->y + 3].shot)
+                    {
+                        i = joueur->rep->x;
+                        j = joueur->rep->y + 3;
+                    }
+                    else if(joueur->rep->y + 4 < size && adversaire->grille[joueur->rep->x][joueur->rep->y + 3].shot && adversaire->grille[joueur->rep->x][joueur->rep->y + 3].bateau > Close && !adversaire->grille[joueur->rep->x][joueur->rep->y + 4].shot)
+                    {
+                        i = joueur->rep->x;
+                        j = joueur->rep->y + 4;
+                    }
+                    else if(joueur->rep->y - 1 > 0 && !adversaire->grille[joueur->rep->x][joueur->rep->y - 1].shot)
+                    {
+                        i = joueur->rep->x;
+                        j = joueur->rep->y - 1;
+                    }
+                    else if (joueur->rep->y - 2 > 0 && adversaire->grille[joueur->rep->x][joueur->rep->y - 1].shot && adversaire->grille[joueur->rep->x][joueur->rep->y - 1].bateau > Close && !adversaire->grille[joueur->rep->x][joueur->rep->y - 2].shot)
+                    {
+                        i = joueur->rep->x;
+                        j = joueur->rep->y - 2;
+                    }
+                    else if (joueur->rep->y - 3 > 0 && adversaire->grille[joueur->rep->x][joueur->rep->y - 2].shot && adversaire->grille[joueur->rep->x][joueur->rep->y - 2].bateau > Close && !adversaire->grille[joueur->rep->x][joueur->rep->y - 3].shot)
+                    {
+                        i = joueur->rep->x;
+                        j = joueur->rep->y - 3;
+                    }
+                    else if (joueur->rep->y - 4 > 0 && adversaire->grille[joueur->rep->x][joueur->rep->y - 3].shot && adversaire->grille[joueur->rep->x][joueur->rep->y - 3].bateau > Close && !adversaire->grille[joueur->rep->x][joueur->rep->y - 4].shot)
+                    {
+                        i = joueur->rep->x;
+                        j = joueur->rep->y - 4;
+                    }
+                    else
+                    {
+                        printf("Erreur de l'IA (standard shot horizontal)\n");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                else if (joueur->etat->sens == Vertical)
+                {
+                    if (joueur->rep->x + 1 < size && adversaire->grille[joueur->rep->x][joueur->rep->y].bateau > Close && !adversaire->grille[joueur->rep->x + 1][joueur->rep->y].shot)
+                    {
+                        i = joueur->rep->x + 1;
+                        j = joueur->rep->y;
+                    }
+                    else if(joueur->rep->x + 2 < size && adversaire->grille[joueur->rep->x + 1][joueur->rep->y].shot && adversaire->grille[joueur->rep->x + 1][joueur->rep->y].bateau > Close && !adversaire->grille[joueur->rep->x + 2][joueur->rep->y].shot)
+                    {
+                        i = joueur->rep->x + 2;
+                        j = joueur->rep->y;
+                    }
+                    else if(joueur->rep->x + 3 < size && adversaire->grille[joueur->rep->x + 2][joueur->rep->y].shot && adversaire->grille[joueur->rep->x + 2][joueur->rep->y].bateau > Close && !adversaire->grille[joueur->rep->x + 3][joueur->rep->y].shot)
+                    {
+                        i = joueur->rep->x + 3;
+                        j = joueur->rep->y;
+                    }
+                    else if(joueur->rep->x + 4 < size && adversaire->grille[joueur->rep->x + 3][joueur->rep->y].shot && adversaire->grille[joueur->rep->x + 3][joueur->rep->y].bateau > Close && !adversaire->grille[joueur->rep->x + 4][joueur->rep->y].shot)
+                    {
+                        i = joueur->rep->x + 4;
+                        j = joueur->rep->y;
+                    }
+                    else if(joueur->rep->x - 1 > 0 && !adversaire->grille[joueur->rep->x - 1][joueur->rep->y].shot)
+                    {
+                        i = joueur->rep->x - 1;
+                        j = joueur->rep->y;
+                    }
+                    else if (joueur->rep->x - 2 > 0 && adversaire->grille[joueur->rep->x - 1][joueur->rep->y].shot &&  adversaire->grille[joueur->rep->x - 1][joueur->rep->y].bateau > Close && !adversaire->grille[joueur->rep->x - 2][joueur->rep->y].shot)
+                    {
+                        i = joueur->rep->x - 2;
+                        j = joueur->rep->y;
+                    }
+                    else if (joueur->rep->x - 3 > 0 && adversaire->grille[joueur->rep->x - 2][joueur->rep->y].shot &&  adversaire->grille[joueur->rep->x - 2][joueur->rep->y].bateau > Close && !adversaire->grille[joueur->rep->x - 3][joueur->rep->y].shot)
+                    {
+                        i = joueur->rep->x - 3;
+                        j = joueur->rep->y;
+                    }
+                    else if (joueur->rep->x - 4 > 0 && adversaire->grille[joueur->rep->x - 3][joueur->rep->y].shot &&  adversaire->grille[joueur->rep->x - 3][joueur->rep->y].bateau > Close && !adversaire->grille[joueur->rep->x - 4][joueur->rep->y].shot)
+                    {
+                        i = joueur->rep->x - 4;
+                        j = joueur->rep->y;
+                    }
+                    else
+                    {
+                        printf("Erreur de l'IA (standard shot vertical)\n");
+                        exit(EXIT_FAILURE);
+                    }
                 }
                 else
                 {
-                    i++;
+                    printf("\n[%d;%d]\n", joueur->etat->x, joueur->etat->y);
+                    if (joueur->etat->y + 1 < size && !adversaire->grille[joueur->etat->x][joueur->etat->y + 1].shot)
+                    {
+                        i = joueur->etat->x;
+                        j = joueur->etat->y + 1;
+                    }
+                    else if (joueur->etat->x + 1 < size && !adversaire->grille[joueur->etat->x + 1][joueur->etat->y].shot)
+                    {
+                        i = joueur->etat->x + 1;
+                        j = joueur->etat->y;
+                    }
+                    else if (joueur->etat->y - 1 > 0 && !adversaire->grille[joueur->etat->x][joueur->etat->y - 1].shot)
+                    {
+                        i = joueur->etat->x;
+                        j = joueur->etat->y - 1;
+                    }
+                    else if (joueur->etat->x - 1 > 0 && !adversaire->grille[joueur->etat->x - 1][joueur->etat->y].shot)
+                    {
+                        i = joueur->etat->x - 1;
+                        j = joueur->etat->y;
+                    }
+                    else
+                    {
+                        printf("Erreur de l'IA (standard shot unknown)\n");
+                        exit(EXIT_FAILURE);
+                    }
                 }
             }
+            else
+            {
+                while (adversaire->grille[i][j].shot || (adversaire->grille[i - 1][j].shot && adversaire->grille[i - 1][j].bateau <= Close) && (adversaire->grille[i][j - 1].shot && adversaire->grille[i][j - 1].shot <= Close ))
+                {
+                    printf("%d,", i);
+                    if (i + 2 > size)
+                    {
+                        i = 1;
+                        if (i + 2 > size) {
+                            j=1;
+                        }
+                        else {
+                            j++;
+                        }
+                    }
+                    else
+                    {
+                        i++;
+                    }
+                }
+            }
+            joueur->rep->x = i;
+            joueur->rep->y = j;
+            result = standard_shoot_result(size, joueur, adversaire, i, j, adversaire->grille);
+            printf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!! TOUR DU BOT : (%d,%d) !!!!!!!!!!!!!!!!!!!!!\n\n", i, j);
         }
-        joueur->rep->x = i;
-        joueur->rep->y = j;
-        result = standard_shoot_result(size, joueur, adversaire, i, j, adversaire->grille);
-        printf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!! TOUR DU BOT : (%d,%d) !!!!!!!!!!!!!!!!!!!!!\n\n", i, j);
-        //}
     }
     // the above for the bot
     // the below for the player
@@ -1305,9 +1514,10 @@ int initialization(PlayerPtr joueur, PlayerPtr IA);
 void start_game(PlayerPtr joueur, PlayerPtr IA)
 {
     PlayerPtr winner;
-    int init, size, replay = 0, attempts = 25;
+    int init, size, replay = 0, attempts = 25, playerFirst;
     do
     {
+        playerFirst = rand()%2;
         size = initialization(joueur, IA);
         init = 0;
         winner = NULL;
@@ -1332,16 +1542,36 @@ void start_game(PlayerPtr joueur, PlayerPtr IA)
         }
         if (init == 2)
         {
+            printf("\n\t\t------------------------------------------------------------------\n\t\t|  ");
+            if(playerFirst) {
+                printf("Debut de la partie, c'est vous qui commencez. Bonne chance !");
+            }
+            else {
+                printf(" Debut de la partie, c'est l'IA qui commence. Bonne chance !");
+            }
+            printf("  |\n\t\t------------------------------------------------------------------\n");
             printGrilles(size, joueur->grille, IA->grille);
             while (!winner)
             {
-                winner = play(size, joueur, IA);
-                printGrilles(size, joueur->grille, IA->grille);
-                if (!winner)
-                {
+                if(playerFirst) {
+                    winner = play(size, joueur, IA);
+                    printGrilles(size, joueur->grille, IA->grille);
+                    if (!winner)
+                    {
+                        winner = play(size, IA, joueur);
+                        printGrilles(size, joueur->grille, IA->grille);
+                    }
+                }
+                else {
                     winner = play(size, IA, joueur);
                     printGrilles(size, joueur->grille, IA->grille);
+                    if (!winner)
+                    {
+                        winner = play(size, joueur, IA);
+                        printGrilles(size, joueur->grille, IA->grille);
+                    }
                 }
+
             }
             printf("\n\t\t------------------------------------------------------------------------\n\t\t|  ");
             if (winner == joueur)

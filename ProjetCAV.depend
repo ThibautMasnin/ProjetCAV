@@ -1,7 +1,13 @@
 # depslib dependency file v1.0
-1606331501 source:d:\doc\info\langage c\licence\projetcav\main.c
+1607826202 source:d:\doc\info\langage c\licence\projetcav\main.c
 	<stdio.h>
 	<stdlib.h>
 	<stdbool.h>
 	<string.h>
+	<time.h>
+	"regex.h"
+	<ctype.h>
+
+1607791747 d:\doc\info\langage c\licence\projetcav\regex.h
+	<sys/types.h>
 
